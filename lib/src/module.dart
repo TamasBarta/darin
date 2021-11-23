@@ -7,9 +7,9 @@ class Module {
   Module._withParent(this._parentModule);
 
   Module.fromModules(List<Module> modules) : _parentModule = null {
-    modules.forEach((element) {
+    for (var element in modules) {
       _providers.addAll(element._providers);
-    });
+    }
   }
 
   Module(Function(ModuleBuilder) builder) : _parentModule = null {

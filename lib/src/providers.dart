@@ -5,7 +5,7 @@ abstract class Provider<T> {
   T Function(Module) factory;
   dynamic qualifier;
 
-  Provider(this.factory, dynamic this.qualifier) : type = T;
+  Provider(this.factory, this.qualifier) : type = T;
 
   T provide(Module module);
 }
