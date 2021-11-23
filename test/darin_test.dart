@@ -1,6 +1,6 @@
-import 'package:test/test.dart';
-
 import 'package:darin/darin.dart';
+import 'package:darin/src/dependency_handle.dart';
+import 'package:test/test.dart';
 
 abstract class Iface {
   useDep();
@@ -33,6 +33,7 @@ void main() {
 
     expect(map[dh2], "Hi");
   });
+
   test('try getting a service', () {
     final module = Module(
       (module) => module
@@ -43,6 +44,7 @@ void main() {
     Iface iface = module.get<Iface>();
     iface.useDep();
   });
+
   test('scope dolgok', () {
     final module = Module((module) => module
       ..scope<IDep>(
@@ -56,5 +58,43 @@ void main() {
     final scope = module.scope(dep);
 
     scope.get<Iface>().useDep();
+  });
+
+  test('concat multiple modules', () {
+    final module1 =
+        Module((module) => module..factory<IDep>((module) => Dep()));
+    final module2 = Module(
+        (module) => module..factory<Iface>((module) => Impl(module.get())));
+
+    final combinedModule1 = Module.fromModules(
+      [
+        module1,
+        module2,
+      ],
+    );
+    final combinedModule2 = Module.fromModules(
+      [
+        module1,
+        module2,
+      ],
+    );
+
+    combinedModule1.get<Iface>().useDep();
+    combinedModule2.get<Iface>().useDep();
+  });
+
+  test('wrong scope usage', () {
+    final depModule = Module(
+      (module) => module
+        ..factory<IDep>((module) => Dep())
+        ..scope(
+          (module) => module
+            ..factory<Iface>(
+              (module) => Impl(module.get()),
+            ),
+        ),
+    );
+
+    expect(() => depModule.get<Iface>(), throwsException);
   });
 }
