@@ -7,38 +7,37 @@ class Module {
   Module._withParent(this._parentModule);
 
   Module(Function(ModuleBuilder) builder) : _parentModule = null {
-    builder(ModuleBuilder(this));
+    builder(ModuleBuilder._(this));
   }
 
-  T get<T>() {
+  T get<T>({dynamic qualifier}) {
     Module? module = this;
     Provider? provider;
+    final handle = DependencyHandle(T, qualifier);
     while (module != null) {
-      provider = module._providers[T];
+      provider = module._providers[handle];
       if (provider != null) break;
       module = module._parentModule;
     }
     if (provider == null) {
       throw Exception(
-          "The type $T doesn't have any provider in the current scope.");
+          "The type $T with the qualifier $qualifier doesn't have any provider in the current scope.");
     }
     return provider.provide(this);
   }
 
-  Module scope(String scopeName) {
-    final provider = _providers[DependencyHandle(Module, scopeName)];
-    if (provider == null) {
-      throw Exception("The scope with the name $scopeName is not defined.");
-    }
-    return provider.provide(this);
+  Module scope<S>(S owner) {
+    var module = get<Module>(qualifier: S);
+    ModuleBuilder._(module).scoped<S>((module) => owner);
+    return module;
   }
 }
 
 class DependencyHandle {
-  Type type;
-  String? name;
+  final Type type;
+  final dynamic qualifier;
 
-  DependencyHandle(this.type, this.name);
+  const DependencyHandle(this.type, this.qualifier);
 
   @override
   bool operator ==(Object other) =>
@@ -46,45 +45,52 @@ class DependencyHandle {
       other is DependencyHandle &&
           runtimeType == other.runtimeType &&
           type == other.type &&
-          name == other.name;
+          qualifier == other.qualifier;
 
   @override
-  int get hashCode => type.hashCode ^ (name?.hashCode ?? 0);
+  int get hashCode => Object.hash(type, qualifier);
+
+  @override
+  String toString() => "[type: $type, qualifier: $qualifier]";
 }
 
 class ModuleBuilder {
   final Module _module;
 
-  ModuleBuilder(this._module);
+  ModuleBuilder._(this._module);
 
-  factory<T>(T Function(Module) provider, {String? name}) {
-    _module._providers[DependencyHandle(T, name)] = FactoryProvider(provider);
+  factory<T>(T Function(Module) provider, {dynamic qualifier}) {
+    _module._providers[DependencyHandle(T, qualifier)] =
+        FactoryProvider(provider, qualifier);
   }
 
-  scoped<T>(T Function(Module) provider, {String? name}) {
-    _module._providers[DependencyHandle(T, name)] = ScopedProvider(provider);
+  scoped<T>(T Function(Module) provider, {dynamic qualifier}) {
+    _module._providers[DependencyHandle(T, qualifier)] =
+        ScopedProvider(provider, qualifier);
   }
 
-  scope<T>(String scopeName, T owner, Function(ModuleBuilder) scopeFactory) {
+  scope<T>(Function(ModuleBuilder) scopeFactory) {
     factory((module) {
       var childModule = Module._withParent(_module);
-      scopeFactory(ModuleBuilder(childModule));
+      scopeFactory(ModuleBuilder._(childModule));
       return childModule;
-    }, name: scopeName);
+    }, qualifier: T);
   }
 }
 
 abstract class Provider<T> {
   Type type;
   T Function(Module) factory;
+  dynamic qualifier;
 
-  Provider(this.factory) : type = T;
+  Provider(this.factory, dynamic this.qualifier) : type = T;
 
   T provide(Module module);
 }
 
 class ScopedProvider<T> extends Provider<T> {
-  ScopedProvider(T Function(Module) factory) : super(factory);
+  ScopedProvider(T Function(Module) factory, dynamic qualifier)
+      : super(factory, qualifier);
 
   T? _instance;
 
@@ -92,8 +98,9 @@ class ScopedProvider<T> extends Provider<T> {
   T provide(Module module) => _instance ??= factory(module);
 }
 
-class FactoryProvider extends Provider {
-  FactoryProvider(Function(Module) factory) : super(factory);
+class FactoryProvider<T> extends Provider {
+  FactoryProvider(T Function(Module) factory, dynamic qualifier)
+      : super(factory, qualifier);
 
   @override
   provide(Module module) => factory(module);
