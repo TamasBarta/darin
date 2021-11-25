@@ -1,4 +1,5 @@
-part of darin;
+import 'dependency_handle.dart';
+import 'providers.dart';
 
 class Module {
   final Map<DependencyHandle, Provider> _providers = {};
@@ -38,5 +39,38 @@ class Module {
     return module;
   }
 
+  Module scopeProvided<S>({dynamic qualifier}) {
+    var newScope = get<Module>(qualifier: S);
+    var owner = newScope.get<S>(qualifier: qualifier);
+    ModuleBuilder._(newScope).scoped((module) {
+      return owner;
+    });
+    return newScope;
+  }
+
   Module override(List<Module> modules) => Module.fromModules([this] + modules);
+}
+
+class ModuleBuilder {
+  final Module _module;
+
+  ModuleBuilder._(this._module);
+
+  factory<T>(T Function(Module) provider, {dynamic qualifier}) {
+    _module._providers[DependencyHandle(T, qualifier)] =
+        FactoryProvider(provider, qualifier);
+  }
+
+  scoped<T>(T Function(Module) provider, {dynamic qualifier}) {
+    _module._providers[DependencyHandle(T, qualifier)] =
+        ScopedProvider(provider, qualifier);
+  }
+
+  scope<T>(Function(ModuleBuilder) scopeFactory) {
+    factory((module) {
+      var childModule = Module._withParent(_module);
+      scopeFactory(ModuleBuilder._(childModule));
+      return childModule;
+    }, qualifier: T);
+  }
 }

@@ -97,4 +97,26 @@ void main() {
 
     expect(() => depModule.get<Iface>(), throwsException);
   });
+
+  test('scopeProvided', () {
+    final module = Module(
+      (module) => module
+        ..factory<IDep>((_) => Dep())
+        ..scope<IDep>(
+          (module) => module..factory<Iface>((module) => Impl(module.get())),
+        ),
+    );
+
+    final scope = module.scopeProvided<IDep>();
+
+    final dep = scope.get<IDep>();
+    final depAgain = scope.get<IDep>();
+
+    expect(dep, depAgain);
+
+    final impl = scope.get<Iface>();
+    final impl2 = scope.get<Iface>();
+
+    expect(impl, isNot(impl2));
+  });
 }

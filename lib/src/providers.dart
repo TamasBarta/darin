@@ -1,4 +1,4 @@
-import '../darin.dart';
+import 'module.dart';
 
 abstract class Provider<T> {
   Type type;

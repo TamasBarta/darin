@@ -4,7 +4,7 @@ Dependency Injection oversimplified. Inspired by Koin, with focus on scopes.
 
 ## Features
 
-- Define your dependencies in a DSL like syntax
+- Define your dependencies in a syntax as close to DSL as possible in Dart
 - Use scopes to control the life-cycle of your objects (relying on the GC)
 - Semi-automatic dependency resolution of dependencies
 - NO MAGIC, all achieved by just regular Dart code, no unnecessary code generation
