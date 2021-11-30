@@ -119,4 +119,17 @@ void main() {
 
     expect(impl, isNot(impl2));
   });
+
+  test('multibinding', () {
+    final module = Module(
+      (module) => module
+        ..intoMap<String, int>((module) => {"foo": 1})
+        ..intoMap<String, int>((module) => {"bar": 2})
+        ..intoSet<String>((module) => {"foo"})
+        ..intoSet<String>((module) => {"bar"}),
+    );
+
+    expect(module.getMap<Map<String, int>>(), {"foo": 1, "bar": 2});
+    expect(module.getSet<Set<String>>(), ["foo", "bar"]);
+  });
 }
