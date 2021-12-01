@@ -132,4 +132,38 @@ void main() {
     expect(module.getMap<Map<String, int>>(), {"foo": 1, "bar": 2});
     expect(module.getSet<Set<String>>(), ["foo", "bar"]);
   });
+  test('multibinding scopes', () {
+    final module = Module(
+      (module) => module
+        ..scope<String>(
+          (module) => module
+            ..intoSet<String>((module) => {"foo"})
+            ..intoSet<String>((module) => {"bar"})
+            ..intoMap<String, int>((module) => {"foo": 1})
+            ..intoMap<String, int>((module) => {"bar": 2}),
+        ),
+    );
+
+    expect(
+      module.scope("yeah").getMap<Map<String, int>>(),
+      {"foo": 1, "bar": 2},
+    );
+    expect(() => module.getSet<Set<String>>(), throwsException);
+  });
+
+  test('multibinding but with inference', () {
+    final module = Module(
+      (module) => module
+        ..intoMap((module) => {"foo": 1})
+        ..intoMap((module) => {"bar": 2})
+        ..intoSet((module) => {"foo"})
+        ..intoSet((module) => {"bar"}),
+    );
+
+    Map<String, int> map = module.getMap();
+    Set<String> set = module.getSet();
+
+    expect(map, {"foo": 1, "bar": 2});
+    expect(set, ["foo", "bar"]);
+  });
 }

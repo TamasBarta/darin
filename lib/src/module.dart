@@ -11,6 +11,7 @@ class Module {
   Module.fromModules(List<Module> modules) : _parentModule = null {
     for (var element in modules) {
       _providers.addAll(element._providers);
+      _multibindingProviders.addAll(element._multibindingProviders);
     }
   }
 
