@@ -11,7 +11,12 @@ class Module {
   Module.fromModules(List<Module> modules) : _parentModule = null {
     for (var element in modules) {
       _providers.addAll(element._providers);
-      _multibindingProviders.addAll(element._multibindingProviders);
+      element._multibindingProviders.forEach((key, value) {
+        var set = _multibindingProviders[key];
+        set ??= value;
+        set.addAll(value);
+        _multibindingProviders[key] = set;
+      });
     }
   }
 
@@ -54,47 +59,83 @@ class Module {
 
   T getMap<T extends Map>({dynamic qualifier}) {
     Module? module = this;
-    Set<Provider<T>>? providers;
+    final providers = <Provider<T>, Module>{};
     final handle = DependencyHandle(T, qualifier);
     while (module != null) {
       final providerSet = module._multibindingProviders[handle];
       if (providerSet != null && providerSet is Set<Provider<T>>) {
-        providers = providerSet.cast<Provider<T>>();
+        providers.addEntries(
+          providerSet.cast<Provider<T>>().map((e) => MapEntry(e, module!)),
+        );
       }
-      if (providers != null) break;
       module = module._parentModule;
     }
-    if (providers == null) {
+    if (providers.isEmpty) {
       throw Exception(
           "The map multibinding of $T with the qualifier $qualifier doesn't have any provider in the current scope.");
     }
-    return providers.map((e) => e.provide(module!)).reduce((value, element) {
-      value.addAll(element);
-      return value;
-    });
+    final providedMap = providers
+        .map((provider, module) {
+          return MapEntry(provider, provider.provide(module));
+        })
+        .values
+        .reduce((value, element) {
+          value.addAll(element);
+          return value;
+        });
+    return providedMap;
   }
 
   T getSet<T extends Set>({dynamic qualifier}) {
     Module? module = this;
-    Set<Provider<T>>? providers;
+    final providers = <Provider<T>, Module>{};
     final handle = DependencyHandle(T, qualifier);
     while (module != null) {
       final providerSet = module._multibindingProviders[handle];
       if (providerSet != null && providerSet is Set<Provider<T>>) {
-        providers = providerSet.cast<Provider<T>>();
+        providers.addEntries(
+          providerSet.cast<Provider<T>>().map((e) => MapEntry(e, module!)),
+        );
       }
-      if (providers != null) break;
       module = module._parentModule;
     }
-    if (providers == null) {
+    if (providers.isEmpty) {
       throw Exception(
-          "The set multibinding of $T with the qualifier $qualifier doesn't have any provider in the current scope.");
+          "The map multibinding of $T with the qualifier $qualifier doesn't have any provider in the current scope.");
     }
-    return providers.map((e) => e.provide(module!)).reduce((value, element) {
-      value.addAll(element);
-      return value;
-    });
+    final providedSet = providers
+        .map((provider, module) {
+          return MapEntry(provider, provider.provide(module));
+        })
+        .values
+        .reduce((value, element) {
+          value.addAll(element);
+          return value;
+        });
+    return providedSet;
   }
+
+  /* T getSet<T extends Set>({dynamic qualifier}) { */
+  /*   Module? module = this; */
+  /*   Set<Provider<T>>? providers; */
+  /*   final handle = DependencyHandle(T, qualifier); */
+  /*   while (module != null) { */
+  /*     final providerSet = module._multibindingProviders[handle]; */
+  /*     if (providerSet != null && providerSet is Set<Provider<T>>) { */
+  /*       providers = providerSet.cast<Provider<T>>(); */
+  /*     } */
+  /*     if (providers != null) break; */
+  /*     module = module._parentModule; */
+  /*   } */
+  /*   if (providers == null) { */
+  /*     throw Exception( */
+  /*         "The set multibinding of $T with the qualifier $qualifier doesn't have any provider in the current scope."); */
+  /*   } */
+  /*   return providers.map((e) => e.provide(module!)).reduce((value, element) { */
+  /*     value.addAll(element); */
+  /*     return value; */
+  /*   }); */
+  /* } */
 }
 
 class ModuleBuilder {
