@@ -1,5 +1,5 @@
 name: darin
-description: A new Flutter package project.
+description: Dependency Injection oversimplified. Inspired by Koin, with focus on scopes. 
 version: 0.0.1
 repository: https://github.com/TamasBarta/darin
 
