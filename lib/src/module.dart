@@ -114,28 +114,6 @@ class Module {
         });
     return providedSet;
   }
-
-  /* T getSet<T extends Set>({dynamic qualifier}) { */
-  /*   Module? module = this; */
-  /*   Set<Provider<T>>? providers; */
-  /*   final handle = DependencyHandle(T, qualifier); */
-  /*   while (module != null) { */
-  /*     final providerSet = module._multibindingProviders[handle]; */
-  /*     if (providerSet != null && providerSet is Set<Provider<T>>) { */
-  /*       providers = providerSet.cast<Provider<T>>(); */
-  /*     } */
-  /*     if (providers != null) break; */
-  /*     module = module._parentModule; */
-  /*   } */
-  /*   if (providers == null) { */
-  /*     throw Exception( */
-  /*         "The set multibinding of $T with the qualifier $qualifier doesn't have any provider in the current scope."); */
-  /*   } */
-  /*   return providers.map((e) => e.provide(module!)).reduce((value, element) { */
-  /*     value.addAll(element); */
-  /*     return value; */
-  /*   }); */
-  /* } */
 }
 
 class ModuleBuilder {

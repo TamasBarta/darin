@@ -1,3 +1,10 @@
 ## 0.0.1
 
-* TODO: Describe initial release.
+Initial release with support for:
+
+- Resolution based on providers
+- Scopes
+- Qualifiers
+- Multibindings (set, map)
+- Module concatenation
+- Overriding providers on modules
