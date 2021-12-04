@@ -22,12 +22,11 @@ Dependency Injection oversimplified. Inspired by Koin, with focus on scopes.
 
 ## Getting started
 
-Import the package (published to pub.dev soon):
+Import the package:
 
 ```yml
 dependencies:
   darin:
-    git: https://github.com/TamasBarta/darin.git
 ```
 
 ## Usage
@@ -90,7 +89,7 @@ final submodule = module.scopeProvided(MyDep);
 
 ## Additional information
 
-For integration with Flutter, see Darin Flutter (soon).
+For integration with Flutter, see [https://github.com/TamasBarta/darin_flutter](Darin Flutter) (soon).
 
 ## For Koin users
 
