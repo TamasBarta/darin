@@ -40,6 +40,23 @@ class Module {
     return provider.provide(this);
   }
 
+  T Function() getProvider<T>({dynamic qualifier}) {
+    Module? module = this;
+    Provider? provider;
+    final handle = DependencyHandle(T, qualifier);
+    while (module != null) {
+      provider = module._providers[handle];
+      if (provider != null) break;
+      module = module._parentModule;
+    }
+    if (provider == null) {
+      throw Exception(
+          "The type $T with the qualifier $qualifier doesn't have any provider in the current scope.");
+    }
+    final capturedProvider = provider;
+    return () => capturedProvider.provide(this);
+  }
+
   Module scope<S>(S owner) {
     var module = get<Module>(qualifier: S);
     ModuleBuilder._(module).scoped<S>((module) => owner);

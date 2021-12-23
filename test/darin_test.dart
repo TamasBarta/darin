@@ -120,6 +120,47 @@ void main() {
     expect(impl, isNot(impl2));
   });
 
+  group("providers", () {
+    test("simpleProvider", () {
+      var counter1 = 0;
+      var counter2 = 0;
+      final module = Module(
+        (module) => module
+          ..scoped(
+            (module) {
+              counter1++;
+              return "The String 1";
+            },
+            qualifier: 1,
+          )
+          ..factory(
+            (module) {
+              counter2++;
+              return "The String 2";
+            },
+            qualifier: 2,
+          ),
+      );
+      final String Function() provider1 = module.getProvider(qualifier: 1);
+      final String Function() provider2 = module.getProvider(qualifier: 2);
+
+      expect(counter1, 0);
+      expect(counter2, 0);
+
+      expect(provider1(), "The String 1");
+      expect(provider2(), "The String 2");
+
+      expect(counter1, 1);
+      expect(counter2, 1);
+
+      expect(provider1(), "The String 1");
+      expect(provider2(), "The String 2");
+
+      expect(counter1, 1);
+      expect(counter2, 2);
+    });
+  });
+
   group("multibindings", () {
     test('multibinding', () {
       final module = Module(

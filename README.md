@@ -84,7 +84,7 @@ final submodule = module.scopeProvided(MyDep);
 - [x] Basic injection with scope support
 - [x] Flutter integration via `InheritedWidget`
 - [x] Set/Map support
-- [ ] Get the providers themselves similarly to getting the dependencies
+- [x] Get the providers themselves similarly to getting the dependencies
 - [ ] Parameters for factories
 
 ## Additional information
