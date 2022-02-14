@@ -159,6 +159,60 @@ void main() {
       expect(counter1, 1);
       expect(counter2, 2);
     });
+
+    test("scope", () {
+      var counter = 0;
+
+      final module = Module((module) => module
+        ..scope<IDep>(
+          (module) {
+            counter++;
+            return module
+              ..factory<Iface>(
+                (module) => Impl(module.get()),
+              );
+          },
+        ));
+
+      IDep dep = Dep();
+      final scope = module.scopeProvider(dep);
+
+      expect(counter, 0);
+
+      scope().get<Iface>().useDep();
+
+      expect(counter, 1);
+    });
+
+    test("scopeProvided", () {
+      var counter = 0;
+      final module = Module(
+        (module) => module
+          ..factory<IDep>((_) => Dep())
+          ..scope<IDep>(
+            (module) {
+              counter++;
+              return module..factory<Iface>((module) => Impl(module.get()));
+            },
+          ),
+      );
+
+      var scopeProviderProvided = module.scopeProviderProvided<IDep>();
+      expect(counter, 0);
+
+      final scope = scopeProviderProvided();
+      expect(counter, 1);
+
+      final dep = scope.get<IDep>();
+      final depAgain = scope.get<IDep>();
+
+      expect(dep, depAgain);
+
+      final impl = scope.get<Iface>();
+      final impl2 = scope.get<Iface>();
+
+      expect(impl, isNot(impl2));
+    });
   });
 
   group("multibindings", () {
