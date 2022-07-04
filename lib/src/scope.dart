@@ -1,15 +1,15 @@
 import 'dependency_handle.dart';
 import 'providers.dart';
 
-class Module {
+class Scope {
   final Map<DependencyHandle, Provider> _providers = {};
   final Map<DependencyHandle, Set<ScopedProvider>> _multibindingProviders = {};
-  final Module? _parentModule;
+  final Scope? _parentScope;
 
-  Module._withParent(this._parentModule);
+  Scope._withParent(this._parentScope);
 
-  Module.fromModules(List<Module> modules) : _parentModule = null {
-    for (var element in modules) {
+  Scope.fromScopes(List<Scope> scopes) : _parentScope = null {
+    for (var element in scopes) {
       _providers.addAll(element._providers);
       element._multibindingProviders.forEach((key, value) {
         var set = _multibindingProviders[key];
@@ -20,18 +20,18 @@ class Module {
     }
   }
 
-  Module(Function(ModuleBuilder) builder) : _parentModule = null {
-    builder(ModuleBuilder._(this));
+  Scope(Function(ScopeBuilder) builder) : _parentScope = null {
+    builder(ScopeBuilder._(this));
   }
 
   T get<T>({dynamic qualifier}) {
-    Module? module = this;
+    Scope? scope = this;
     Provider? provider;
     final handle = DependencyHandle(T, qualifier);
-    while (module != null) {
-      provider = module._providers[handle];
+    while (scope != null) {
+      provider = scope._providers[handle];
       if (provider != null) break;
-      module = module._parentModule;
+      scope = scope._parentScope;
     }
     if (provider == null) {
       throw Exception(
@@ -43,48 +43,48 @@ class Module {
   T Function() getProvider<T>({dynamic qualifier}) =>
       () => get<T>(qualifier: qualifier);
 
-  Module scope<S>(S owner) {
-    var module = get<Module>(qualifier: S);
-    ModuleBuilder._(module).scoped<S>((module) => owner);
-    return module;
+  Scope scope<S>(S owner) {
+    var scope = get<Scope>(qualifier: S);
+    ScopeBuilder._(scope).scoped<S>((scope) => owner);
+    return scope;
   }
 
-  Module scopeProvided<S>({dynamic qualifier}) {
-    var newScope = get<Module>(qualifier: S);
+  Scope scopeProvided<S>({dynamic qualifier}) {
+    var newScope = get<Scope>(qualifier: S);
     var owner = newScope.get<S>(qualifier: qualifier);
-    ModuleBuilder._(newScope).scoped((module) {
+    ScopeBuilder._(newScope).scoped((scope) {
       return owner;
     });
     return newScope;
   }
 
-  Module Function() scopeProvider<S>(S owner) => () => scope<S>(owner);
+  Scope Function() scopeProvider<S>(S owner) => () => scope<S>(owner);
 
-  Module Function() scopeProviderProvided<S>({dynamic qualifier}) =>
+  Scope Function() scopeProviderProvided<S>({dynamic qualifier}) =>
       () => scopeProvided<S>(qualifier: qualifier);
 
-  Module override(List<Module> modules) => Module.fromModules([this] + modules);
+  Scope override(List<Scope> scopes) => Scope.fromScopes([this] + scopes);
 
   T getMap<T extends Map>({dynamic qualifier}) {
-    Module? module = this;
-    final providers = <Provider<T>, Module>{};
+    Scope? scope = this;
+    final providers = <Provider<T>, Scope>{};
     final handle = DependencyHandle(T, qualifier);
-    while (module != null) {
-      final providerSet = module._multibindingProviders[handle];
+    while (scope != null) {
+      final providerSet = scope._multibindingProviders[handle];
       if (providerSet != null && providerSet is Set<Provider<T>>) {
         providers.addEntries(
-          providerSet.cast<Provider<T>>().map((e) => MapEntry(e, module!)),
+          providerSet.cast<Provider<T>>().map((e) => MapEntry(e, scope!)),
         );
       }
-      module = module._parentModule;
+      scope = scope._parentScope;
     }
     if (providers.isEmpty) {
       throw Exception(
           "The map multibinding of $T with the qualifier $qualifier doesn't have any provider in the current scope.");
     }
     final providedMap = providers
-        .map((provider, module) {
-          return MapEntry(provider, provider.provide(module));
+        .map((provider, scope) {
+          return MapEntry(provider, provider.provide(scope));
         })
         .values
         .reduce((value, element) {
@@ -95,25 +95,25 @@ class Module {
   }
 
   T getSet<T extends Set>({dynamic qualifier}) {
-    Module? module = this;
-    final providers = <Provider<T>, Module>{};
+    Scope? scope = this;
+    final providers = <Provider<T>, Scope>{};
     final handle = DependencyHandle(T, qualifier);
-    while (module != null) {
-      final providerSet = module._multibindingProviders[handle];
+    while (scope != null) {
+      final providerSet = scope._multibindingProviders[handle];
       if (providerSet != null && providerSet is Set<Provider<T>>) {
         providers.addEntries(
-          providerSet.cast<Provider<T>>().map((e) => MapEntry(e, module!)),
+          providerSet.cast<Provider<T>>().map((e) => MapEntry(e, scope!)),
         );
       }
-      module = module._parentModule;
+      scope = scope._parentScope;
     }
     if (providers.isEmpty) {
       throw Exception(
           "The map multibinding of $T with the qualifier $qualifier doesn't have any provider in the current scope.");
     }
     final providedSet = providers
-        .map((provider, module) {
-          return MapEntry(provider, provider.provide(module));
+        .map((provider, scope) {
+          return MapEntry(provider, provider.provide(scope));
         })
         .values
         .reduce((value, element) {
@@ -124,41 +124,41 @@ class Module {
   }
 }
 
-class ModuleBuilder {
-  final Module _module;
+class ScopeBuilder {
+  final Scope _scope;
 
-  ModuleBuilder._(this._module);
+  ScopeBuilder._(this._scope);
 
-  factory<T>(T Function(Module) provider, {dynamic qualifier}) {
-    _module._providers[DependencyHandle(T, qualifier)] =
+  factory<T>(T Function(Scope) provider, {dynamic qualifier}) {
+    _scope._providers[DependencyHandle(T, qualifier)] =
         FactoryProvider(provider, qualifier);
   }
 
-  scoped<T>(T Function(Module) provider, {dynamic qualifier}) {
-    _module._providers[DependencyHandle(T, qualifier)] =
+  scoped<T>(T Function(Scope) provider, {dynamic qualifier}) {
+    _scope._providers[DependencyHandle(T, qualifier)] =
         ScopedProvider(provider, qualifier);
   }
 
-  scope<T>(Function(ModuleBuilder) scopeFactory) {
-    factory((module) {
-      var childModule = Module._withParent(_module);
-      scopeFactory(ModuleBuilder._(childModule));
-      return childModule;
+  scope<T>(Function(ScopeBuilder) scopeFactory) {
+    factory((scope) {
+      var childScope = Scope._withParent(_scope);
+      scopeFactory(ScopeBuilder._(childScope));
+      return childScope;
     }, qualifier: T);
   }
 
-  intoMap<K, V>(Map<K, V> Function(Module) provider, {dynamic qualifier}) {
+  intoMap<K, V>(Map<K, V> Function(Scope) provider, {dynamic qualifier}) {
     _intoMultibinding(provider, qualifier: qualifier);
   }
 
-  intoSet<T>(Set<T> Function(Module) provider, {dynamic qualifier}) {
+  intoSet<T>(Set<T> Function(Scope) provider, {dynamic qualifier}) {
     _intoMultibinding(provider, qualifier: qualifier);
   }
 
-  _intoMultibinding<T>(T Function(Module) provider, {dynamic qualifier}) {
-    var set = _module._multibindingProviders[DependencyHandle(T, qualifier)];
+  _intoMultibinding<T>(T Function(Scope) provider, {dynamic qualifier}) {
+    var set = _scope._multibindingProviders[DependencyHandle(T, qualifier)];
     set ??= <ScopedProvider<T>>{};
     set.add(ScopedProvider<T>(provider, qualifier));
-    _module._multibindingProviders[DependencyHandle(T, qualifier)] = set;
+    _scope._multibindingProviders[DependencyHandle(T, qualifier)] = set;
   }
 }

@@ -1,3 +1,3 @@
 library darin;
 
-export 'src/module.dart';
+export 'src/scope.dart';

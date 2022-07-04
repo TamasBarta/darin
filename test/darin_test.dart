@@ -35,87 +35,87 @@ void main() {
   });
 
   test('try getting a service', () {
-    final module = Module(
-      (module) => module
-        ..factory<Iface>((module) => Impl(module.get()))
+    final scope = Scope(
+      (scope) => scope
+        ..factory<Iface>((scope) => Impl(scope.get()))
         ..factory<IDep>((p0) => Dep()),
     );
 
-    Iface iface = module.get<Iface>();
+    Iface iface = scope.get<Iface>();
     iface.useDep();
   });
 
   test('scope dolgok', () {
-    final module = Module((module) => module
+    final scope = Scope((scope) => scope
       ..scope<IDep>(
-        (module) => module
+        (scope) => scope
           ..factory<Iface>(
-            (module) => Impl(module.get()),
+            (scope) => Impl(scope.get()),
           ),
       ));
 
     IDep dep = Dep();
-    final scope = module.scope(dep);
+    final newScope = scope.scope(dep);
 
-    scope.get<Iface>().useDep();
+    newScope.get<Iface>().useDep();
   });
 
-  test('concat multiple modules', () {
-    final module1 =
-        Module((module) => module..factory<IDep>((module) => Dep()));
-    final module2 = Module(
-        (module) => module..factory<Iface>((module) => Impl(module.get())));
+  test('concat multiple scopes', () {
+    final scope1 =
+        Scope((scope) => scope..factory<IDep>((scope) => Dep()));
+    final scope2 = Scope(
+        (scope) => scope..factory<Iface>((scope) => Impl(scope.get())));
 
-    final combinedModule1 = Module.fromModules(
+    final combinedScope1 = Scope.fromScopes(
       [
-        module1,
-        module2,
+        scope1,
+        scope2,
       ],
     );
-    final combinedModule2 = Module.fromModules(
+    final combinedScope2 = Scope.fromScopes(
       [
-        module1,
-        module2,
+        scope1,
+        scope2,
       ],
     );
 
-    combinedModule1.get<Iface>().useDep();
-    combinedModule2.get<Iface>().useDep();
+    combinedScope1.get<Iface>().useDep();
+    combinedScope2.get<Iface>().useDep();
   });
 
   test('wrong scope usage', () {
-    final depModule = Module(
-      (module) => module
-        ..factory<IDep>((module) => Dep())
+    final depScope = Scope(
+      (scope) => scope
+        ..factory<IDep>((scope) => Dep())
         ..scope(
-          (module) => module
+          (scope) => scope
             ..factory<Iface>(
-              (module) => Impl(module.get()),
+              (scope) => Impl(scope.get()),
             ),
         ),
     );
 
-    expect(() => depModule.get<Iface>(), throwsException);
+    expect(() => depScope.get<Iface>(), throwsException);
   });
 
   test('scopeProvided', () {
-    final module = Module(
-      (module) => module
+    final scope = Scope(
+      (scope) => scope
         ..factory<IDep>((_) => Dep())
         ..scope<IDep>(
-          (module) => module..factory<Iface>((module) => Impl(module.get())),
+          (scope) => scope..factory<Iface>((scope) => Impl(scope.get())),
         ),
     );
 
-    final scope = module.scopeProvided<IDep>();
+    final newScope = scope.scopeProvided<IDep>();
 
-    final dep = scope.get<IDep>();
-    final depAgain = scope.get<IDep>();
+    final dep = newScope.get<IDep>();
+    final depAgain = newScope.get<IDep>();
 
     expect(dep, depAgain);
 
-    final impl = scope.get<Iface>();
-    final impl2 = scope.get<Iface>();
+    final impl = newScope.get<Iface>();
+    final impl2 = newScope.get<Iface>();
 
     expect(impl, isNot(impl2));
   });
@@ -124,25 +124,25 @@ void main() {
     test("simpleProvider", () {
       var counter1 = 0;
       var counter2 = 0;
-      final module = Module(
-        (module) => module
+      final scope = Scope(
+        (scope) => scope
           ..scoped(
-            (module) {
+            (scope) {
               counter1++;
               return "The String 1";
             },
             qualifier: 1,
           )
           ..factory(
-            (module) {
+            (scope) {
               counter2++;
               return "The String 2";
             },
             qualifier: 2,
           ),
       );
-      final String Function() provider1 = module.getProvider(qualifier: 1);
-      final String Function() provider2 = module.getProvider(qualifier: 2);
+      final String Function() provider1 = scope.getProvider(qualifier: 1);
+      final String Function() provider2 = scope.getProvider(qualifier: 2);
 
       expect(counter1, 0);
       expect(counter2, 0);
@@ -163,53 +163,53 @@ void main() {
     test("scope", () {
       var counter = 0;
 
-      final module = Module((module) => module
+      final scope = Scope((scope) => scope
         ..scope<IDep>(
-          (module) {
+          (scope) {
             counter++;
-            return module
+            return scope
               ..factory<Iface>(
-                (module) => Impl(module.get()),
+                (scope) => Impl(scope.get()),
               );
           },
         ));
 
       IDep dep = Dep();
-      final scope = module.scopeProvider(dep);
+      final newScope = scope.scopeProvider(dep);
 
       expect(counter, 0);
 
-      scope().get<Iface>().useDep();
+      newScope().get<Iface>().useDep();
 
       expect(counter, 1);
     });
 
     test("scopeProvided", () {
       var counter = 0;
-      final module = Module(
-        (module) => module
+      final scope = Scope(
+        (scope) => scope
           ..factory<IDep>((_) => Dep())
           ..scope<IDep>(
-            (module) {
+            (scope) {
               counter++;
-              return module..factory<Iface>((module) => Impl(module.get()));
+              return scope..factory<Iface>((scope) => Impl(scope.get()));
             },
           ),
       );
 
-      var scopeProviderProvided = module.scopeProviderProvided<IDep>();
+      var scopeProviderProvided = scope.scopeProviderProvided<IDep>();
       expect(counter, 0);
 
-      final scope = scopeProviderProvided();
+      final newScope = scopeProviderProvided();
       expect(counter, 1);
 
-      final dep = scope.get<IDep>();
-      final depAgain = scope.get<IDep>();
+      final dep = newScope.get<IDep>();
+      final depAgain = newScope.get<IDep>();
 
       expect(dep, depAgain);
 
-      final impl = scope.get<Iface>();
-      final impl2 = scope.get<Iface>();
+      final impl = newScope.get<Iface>();
+      final impl2 = newScope.get<Iface>();
 
       expect(impl, isNot(impl2));
     });
@@ -217,48 +217,48 @@ void main() {
 
   group("multibindings", () {
     test('multibinding', () {
-      final module = Module(
-        (module) => module
-          ..intoMap<String, int>((module) => {"foo": 1})
-          ..intoMap<String, int>((module) => {"bar": 2})
-          ..intoSet<String>((module) => {"foo"})
-          ..intoSet<String>((module) => {"bar"}),
+      final scope = Scope(
+        (scope) => scope
+          ..intoMap<String, int>((scope) => {"foo": 1})
+          ..intoMap<String, int>((scope) => {"bar": 2})
+          ..intoSet<String>((scope) => {"foo"})
+          ..intoSet<String>((scope) => {"bar"}),
       );
 
-      expect(module.getMap<Map<String, int>>(), {"foo": 1, "bar": 2});
-      expect(module.getSet<Set<String>>(), ["foo", "bar"]);
+      expect(scope.getMap<Map<String, int>>(), {"foo": 1, "bar": 2});
+      expect(scope.getSet<Set<String>>(), ["foo", "bar"]);
     });
 
     test('multibinding scopes', () {
-      final module = Module(
-        (module) => module
+      final scope = Scope(
+        (scope) => scope
           ..scope<String>(
-            (module) => module
-              ..intoSet<String>((module) => {"foo"})
-              ..intoSet<String>((module) => {"bar"})
-              ..intoMap<String, int>((module) => {"foo": 1})
-              ..intoMap<String, int>((module) => {"bar": 2}),
+            (scope) => scope
+              ..intoSet<String>((scope) => {"foo"})
+              ..intoSet<String>((scope) => {"bar"})
+              ..intoMap<String, int>((scope) => {"foo": 1})
+              ..intoMap<String, int>((scope) => {"bar": 2}),
           ),
       );
 
       expect(
-        module.scope("yeah").getMap<Map<String, int>>(),
+        scope.scope("yeah").getMap<Map<String, int>>(),
         {"foo": 1, "bar": 2},
       );
-      expect(() => module.getSet<Set<String>>(), throwsException);
+      expect(() => scope.getSet<Set<String>>(), throwsException);
     });
 
     test('multibinding but with inference', () {
-      final module = Module(
-        (module) => module
-          ..intoMap((module) => {"foo": 1})
-          ..intoMap((module) => {"bar": 2})
-          ..intoSet((module) => {"foo"})
-          ..intoSet((module) => {"bar"}),
+      final scope = Scope(
+        (scope) => scope
+          ..intoMap((scope) => {"foo": 1})
+          ..intoMap((scope) => {"bar": 2})
+          ..intoSet((scope) => {"foo"})
+          ..intoSet((scope) => {"bar"}),
       );
 
-      Map<String, int> map = module.getMap();
-      Set<String> set = module.getSet();
+      Map<String, int> map = scope.getMap();
+      Set<String> set = scope.getSet();
 
       expect(map, {"foo": 1, "bar": 2});
       expect(set, ["foo", "bar"]);
@@ -266,28 +266,28 @@ void main() {
 
     group("combine", () {
       test("map", () {
-        final module1 = Module(
-          (module) => module..intoMap((module) => {"foo": "oof"}),
+        final scope1 = Scope(
+          (scope) => scope..intoMap((scope) => {"foo": "oof"}),
         );
-        final module2 = Module(
-          (module) => module..intoMap((module) => {"bar": "rab"}),
+        final scope2 = Scope(
+          (scope) => scope..intoMap((scope) => {"bar": "rab"}),
         );
-        final module = Module.fromModules([module1, module2]);
+        final scope = Scope.fromScopes([scope1, scope2]);
 
         expect(
-            module.getMap<Map<String, String>>(), {"foo": "oof", "bar": "rab"});
+            scope.getMap<Map<String, String>>(), {"foo": "oof", "bar": "rab"});
       });
 
       test("set", () {
-        final module1 = Module(
-          (module) => module..intoSet((module) => {"foo", "oof"}),
+        final scope1 = Scope(
+          (scope) => scope..intoSet((scope) => {"foo", "oof"}),
         );
-        final module2 = Module(
-          (module) => module..intoSet((module) => {"bar", "rab"}),
+        final scope2 = Scope(
+          (scope) => scope..intoSet((scope) => {"bar", "rab"}),
         );
-        final module = Module.fromModules([module1, module2]);
+        final scope = Scope.fromScopes([scope1, scope2]);
 
-        expect(module.getSet<Set<String>>(), {"foo", "oof", "bar", "rab"});
+        expect(scope.getSet<Set<String>>(), {"foo", "oof", "bar", "rab"});
       });
     });
   });
