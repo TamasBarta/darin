@@ -1,3 +1,11 @@
+## 0.1.0
+
+- Added `debug` on scopes to print all providers and parent scopes until top
+
+BREAKING CHANGES:
+
+- Renamed all module terminology to scope to eliminate confusion
+
 ## 0.0.3
 
 Added support for injecting providers of scopes too.

@@ -1,6 +1,6 @@
 name: darin
 description: Dependency Injection oversimplified. Inspired by Koin, with focus on scopes. 
-version: 0.0.3
+version: 0.1.0
 repository: https://github.com/TamasBarta/darin
 
 environment:
