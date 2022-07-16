@@ -122,6 +122,23 @@ class Scope {
         });
     return providedSet;
   }
+
+  debug() {
+    Scope? scope = this;
+    while (scope != null) {
+      print("SCOPE\n=============================");
+      print("Bindings:");
+      scope._providers.forEach((key, value) {
+        print("${value is FactoryProvider ? 'factory' : 'scoped'} $key");
+      });
+      print("Multibindings:");
+      scope._multibindingProviders.forEach((key, value) {
+        print("${value is FactoryProvider ? 'factory' : 'scoped'} $key");
+      });
+      if (_parentScope != null) print("");
+      scope = scope._parentScope;
+    }
+  }
 }
 
 class ScopeBuilder {
