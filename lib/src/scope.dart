@@ -20,7 +20,7 @@ class Scope {
     }
   }
 
-  Scope(Function(ScopeBuilder) builder) : _parentScope = null {
+  Scope(Function(ScopeBuilder builder) builder) : _parentScope = null {
     builder(ScopeBuilder._(this));
   }
 
@@ -146,17 +146,17 @@ class ScopeBuilder {
 
   ScopeBuilder._(this._scope);
 
-  factory<T>(T Function(Scope) provider, {dynamic qualifier}) {
+  factory<T>(T Function(Scope scope) provider, {dynamic qualifier}) {
     _scope._providers[DependencyHandle(T, qualifier)] =
         FactoryProvider(provider, qualifier);
   }
 
-  scoped<T>(T Function(Scope) provider, {dynamic qualifier}) {
+  scoped<T>(T Function(Scope scope) provider, {dynamic qualifier}) {
     _scope._providers[DependencyHandle(T, qualifier)] =
         ScopedProvider(provider, qualifier);
   }
 
-  scope<T>(Function(ScopeBuilder) scopeFactory) {
+  scope<T>(Function(ScopeBuilder builder) scopeFactory) {
     factory((scope) {
       var childScope = Scope._withParent(_scope);
       scopeFactory(ScopeBuilder._(childScope));
@@ -164,15 +164,15 @@ class ScopeBuilder {
     }, qualifier: T);
   }
 
-  intoMap<K, V>(Map<K, V> Function(Scope) provider, {dynamic qualifier}) {
+  intoMap<K, V>(Map<K, V> Function(Scope scope) provider, {dynamic qualifier}) {
     _intoMultibinding(provider, qualifier: qualifier);
   }
 
-  intoSet<T>(Set<T> Function(Scope) provider, {dynamic qualifier}) {
+  intoSet<T>(Set<T> Function(Scope scope) provider, {dynamic qualifier}) {
     _intoMultibinding(provider, qualifier: qualifier);
   }
 
-  _intoMultibinding<T>(T Function(Scope) provider, {dynamic qualifier}) {
+  _intoMultibinding<T>(T Function(Scope scope) provider, {dynamic qualifier}) {
     var set = _scope._multibindingProviders[DependencyHandle(T, qualifier)];
     set ??= <ScopedProvider<T>>{};
     set.add(ScopedProvider<T>(provider, qualifier));

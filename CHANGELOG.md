@@ -1,3 +1,7 @@
+## 0.1.1
+
+- Added names to anonymous function parameters (I expect the Dart language server to pick it up, and use it, when autocompletes the anonymous functions)
+
 ## 0.1.0
 
 - Added `debug` on scopes to print all providers and parent scopes until top

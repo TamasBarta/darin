@@ -2,7 +2,7 @@ import 'scope.dart';
 
 abstract class Provider<T> {
   Type type;
-  T Function(Scope) factory;
+  T Function(Scope scope) factory;
   dynamic qualifier;
 
   Provider(this.factory, this.qualifier) : type = T;
@@ -11,7 +11,7 @@ abstract class Provider<T> {
 }
 
 class ScopedProvider<T> extends Provider<T> {
-  ScopedProvider(T Function(Scope) factory, dynamic qualifier)
+  ScopedProvider(T Function(Scope scope) factory, dynamic qualifier)
       : super(factory, qualifier);
 
   T? _instance;
@@ -21,7 +21,7 @@ class ScopedProvider<T> extends Provider<T> {
 }
 
 class FactoryProvider<T> extends Provider {
-  FactoryProvider(T Function(Scope) factory, dynamic qualifier)
+  FactoryProvider(T Function(Scope scope) factory, dynamic qualifier)
       : super(factory, qualifier);
 
   @override
