@@ -1,3 +1,8 @@
+## 0.1.2
+
+- Added API documentation
+- Added example app to demonstrate basic usage
+
 ## 0.1.1
 
 - Added names to anonymous function parameters (I expect the Dart language server to pick it up, and use it, when autocompletes the anonymous functions)
